@@ -92,36 +92,9 @@
 			//==> 아래와 같이 정의한 이유는 ??
 			$(".ct_list_pop:nth-child(4n+6)" ).css("background-color" , "whitesmoke");
 			
-			 /* var keyword = $('#searchKeyword').text().trim();
-			//for Autocomplete
-			  $('#searchKeyword').autocomplete({
-				source:
-				 function(request, response) {
-					
-					$.ajax({
-						url : "/user/json/getListAuto/"+keyword ,
-						method : "GET",
-						dataType : "json",
-						data : {
-							term: request.term
-						},
-						 headers : {
-							"Accept" : "application/json",
-							"Content-Type" : "application/json"
-						},
-						success: function(JSONData) {
-							console.log(JSONData);
-							response(JSONData);
-						}
-					});
-				},
-				minLength: 2,
-				autoFocus : true
-			}); */ 
 			
-			///*
 			//for Autocomplete
-			 $('#searchKeyword').autocomplete({
+			 /* $('#searchKeyword').autocomplete({
 				source:
 				 function(request, response) {
 					
@@ -149,9 +122,34 @@
 				autoFocus : true,
 				delay : 500,
 				position : { my : 'right top', at : 'right bottom' },
-		}); //*/
+		}); */
+		
+		var userList = 
+			$.ajax({
+				url : "/user/json/getListAuto",
+				method : "get",
+				dataType : "json",
+				headers : {
+					"Accept" : "application/json",
+					"Content-Type" : "application/json"
+				},
+				success : function (JSONData) {
+					$("#searchKeyword").autocomplete({
+						source : JSONData,
+						minLength: 2,
+						autoFocus : true
+					})
+				}
+			});
+		console.log(userList);
+		
+		
 			
 		});
+		
+		
+		
+		// 리스트 뽑고 -> success 안에 auto com
 	</script>		
 	
 </head>
