@@ -27,7 +27,50 @@
 			$("#currentPage").val(currentPage)
 			$("form").attr("method" , "POST").attr("action" , "/user/listUser").submit();
 		}
+		
+		
+		function getUset(){
+			$( ".ct_list_pop td:nth-child(3)" ).on("click" , function() {
+				//Debug..
+				//alert(  $( this ).text().trim() );
+				
+				//////////////////////////// 추가 , 변경된 부분 ///////////////////////////////////
+				//self.location ="/user/getUser?userId="+$(this).text().trim();
+				////////////////////////////////////////////////////////////////////////////////////////////
+				var userId = $(this).text().trim();
+				$.ajax( 
+						{
+							url : "/user/json/getUser/"+userId ,
+							method : "GET" ,
+							dataType : "json" ,
+							headers : {
+								"Accept" : "application/json",
+								"Content-Type" : "application/json"
+							},
+							success : function(JSONData , status) {
 
+								//Debug...
+								//alert(status);
+								//Debug...
+								//alert("JSONData : \n"+JSONData);
+								
+								var displayValue = "<h3>"
+															+"아이디 : "+JSONData.userId+"<br/>"
+															+"이  름 : "+JSONData.userName+"<br/>"
+															+"이메일 : "+JSONData.email+"<br/>"
+															+"ROLE : "+JSONData.role+"<br/>"
+															+"등록일 : "+JSONData.regDateString+"<br/>"
+															+"</h3>";
+								//Debug...									
+								//alert(displayValue);
+								$("h3").remove();
+								$( "#"+userId+"" ).html(displayValue);
+							}
+					});
+					////////////////////////////////////////////////////////////////////////////////////////////
+				
+		})
+		};
 		//==>"검색" ,  userId link  Event 연결 및 처리
 		 $(function() {
 			 
@@ -94,62 +137,94 @@
 			
 			
 			//for Autocomplete
-			 /* $('#searchKeyword').autocomplete({
-				source:
-				 function(request, response) {
+			var userList = 
+				$.ajax({
+					url : "/user/json/getListAuto",
+					method : "get",
+					dataType : "json",
+					headers : {
+						"Accept" : "application/json",
+						"Content-Type" : "application/json"
+					},
+					success : function (JSONData) {
+						$("#searchKeyword").autocomplete({
+							source : JSONData,
+							minLength: 2,
+							autoFocus : true
+						})
+					}
+				}); // end of AutoCo,plete
+		
+			 
+		
+		
+			
+			// for infinity scroll
+				let indexPage = 1;
+				$(window).on("scroll", function() {
+					var maxHeigth = $(document).height();
+					var currentScroll = $(window).scrollTop()+$(window).height();
+					var currentPage = $("#currentPage").val(currentPage);
+					$( ".ct_list_pop td:nth-child(3)" ).css("color" , "red");
+					$(".ct_list_pop:nth-child(4n+6)" ).css("background-color" , "whitesmoke");
 					
-					$.ajax({
-						url : "/user/json/getListAuto",
-						method : "get",
-						dataType : "json", 
-						data : {
-							term: request.term
-						},
-						 headers : {
-							"Accept" : "application/json",
-							"Content-Type" : "application/json"
-						},
-						success: function(JsonData) {
-							console.log(JsonData);
-							response(JsonData);
-						}
-					});
-				},
-				focus: function (event, ui) {
-			        return false;
-			    },
-				minLength: 2,
-				autoFocus : true,
-				delay : 500,
-				position : { my : 'right top', at : 'right bottom' },
-		}); */
-		
-		var userList = 
-			$.ajax({
-				url : "/user/json/getListAuto",
-				method : "get",
-				dataType : "json",
-				headers : {
-					"Accept" : "application/json",
-					"Content-Type" : "application/json"
-				},
-				success : function (JSONData) {
-					$("#searchKeyword").autocomplete({
-						source : JSONData,
-						minLength: 2,
-						autoFocus : true
-					})
-				}
-			});
-		console.log(userList);
-		
-		
+
+					if(maxHeigth <= currentScroll){
+						indexPage++;
+						$.ajax({
+							url : "/user/json/listUser",
+							method : "POST",
+							headers : {
+								"Accept" : "application/json",
+								"Content-Type" : "application/json"
+							},
+							data : JSON.stringify({
+								currentPage : indexPage,
+								searchCondition : $("select[name='searchCondition']").val(),
+								searchKeyword : $("input[name='searchKeyword']").val()
+							}),
+							dataType : "json",
+							success : function(JSONData){
+								console.log(JSONData);
+								console.log("넘어온 목록 :\n"+JSON.stringify(JSONData));
+								console.log("넘어온 목록 :\n"+Object.keys(JSONData).length);
+								
+								let listLength = Object.keys(JSONData).length;
+								
+								
+								for (let i = 0; i<listLength; i++){
+									
+									let html = 
+										"<tr class='ct_list_pop'>"
+											+"<td align='center' height='200px'>"+(i+1)+"</td>"
+											+"<td></td>"
+											+"<td align='left' height='200px'>"+JSONData[i].userId+"</td>"
+											+"<td></td>"
+											+"<td align='left' height='200px'>"+JSONData[i].userName+"</td>"
+											+"<td></td>"
+											+"<td align='left' height='200px'>"+(JSONData[i].email == null ? " " : JSONData[i].email)+"</td>"
+										+"</tr>"
+										+"<tr>"
+											+"<td id='"+JSONData[i].userId+"'colspan='11' bgcolor='D6D7D6' height='1'></td>"
+										+"</tr>";
+										
+									$("table:last").append(html);
+								}
+								
+								getUset();
+								
+							}
+						})
+					}
+				})// end of infinity scroll
+			 
+			
+			
 			
 		});
 		
 		
 		
-		// 리스트 뽑고 -> success 안에 auto com
 	</script>		
 	
 </head>
@@ -229,14 +304,13 @@
 	<c:forEach var="user" items="${list}">
 		<c:set var="i" value="${ i+1 }" />
 		<tr class="ct_list_pop">
-			<td align="center">${ i }</td>
+			<td align="center" height="200px">${ i }</td>
 			<td></td>
-			<td align="left">${user.userId}</td>
+			<td align="left" height="200px">${user.userId}</td>
 			<td></td>
-			<td align="left">${user.userName}</td>
+			<td align="left" height="200px">${user.userName}</td>
 			<td></td>
-			<td align="left">${user.email}
-			</td>
+			<td align="left" height="200px">${user.email}</td>
 		</tr>
 		<tr>
 			<!-- //////////////////////////// 추가 , 변경된 부분 /////////////////////////////
@@ -250,7 +324,7 @@
 
 
 <!-- PageNavigation Start... -->
-<table width="100%" border="0" cellspacing="0" cellpadding="0"	style="margin-top:10px;">
+<%-- <table width="100%" border="0" cellspacing="0" cellpadding="0"	style="margin-top:10px;">
 	<tr>
 		<td align="center">
 		   <input type="hidden" id="currentPage" name="currentPage" value=""/>
@@ -259,7 +333,7 @@
 			
     	</td>
 	</tr>
-</table>
+</table> --%>
 <!-- PageNavigation End... -->
 
 </form>
