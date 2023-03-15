@@ -1,7 +1,10 @@
 package com.model2.mvc.web.product;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -9,13 +12,17 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.model2.mvc.common.Page;
 import com.model2.mvc.common.Search;
@@ -61,14 +68,77 @@ public class ProductController {
 	}
 	
 	//@RequestMapping("/addProduct")
-	@PostMapping("addProduct")
-	public String addProduct( @ModelAttribute("product") Product product ) throws Exception {
+//	@PostMapping("addProduct")
+//	public String addProduct( @ModelAttribute("product") Product product,
+//									@RequestParam("file") MultipartFile file) throws Exception {
+//
+//		System.out.println("/addUser.do");
+//		System.out.println("product domain객체에 binding 되었는지 : "+product);
+//		String date = product.getManuDate().replaceAll("-", "");
+//		product.setManuDate(date);
+//		System.out.println(product.toString());
+//		
+//		// file저장 경로 설정
+//		String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
+//		
+//		if(file != null && file.getSize()>0) {
+//			// file의 원래 이름 가져와서 Random한 이름으로 저장
+//			UUID uuid = UUID.randomUUID();
+//			String originalName = file.getOriginalFilename();
+//			System.out.println("originalName : "+originalName);
+//			String convertFileName = uuid.toString()+"_"+file.getOriginalFilename();
+//			
+//			// 저장할 경로 지정 및 저장
+//			file.transferTo(new File((temDir)+"\\"+convertFileName));
+//			System.out.println("file name: "+convertFileName);
+//			
+//			product.setFileName(convertFileName);
+//		}
+		
+	
+		//multi file upload
+		@PostMapping("addProduct")
+		public String addProduct( @ModelAttribute("product") Product product,
+										@RequestParam("file") List<MultipartFile> files) throws Exception {
 
-		System.out.println("/addUser.do");
-		System.out.println("바뀌기 전 product manudate : "+product.getManuDate());
-		String date = product.getManuDate().replaceAll("-", "");
-		product.setManuDate(date);
-		System.out.println(product.toString());
+			System.out.println("/addUser.do");
+			System.out.println("product domain객체에 binding 되었는지 : "+product);
+			String date = product.getManuDate().replaceAll("-", "");
+			product.setManuDate(date);
+			System.out.println(product.toString());
+			
+			// file저장 경로 설정
+			String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
+			String prodTemp = "";
+			UUID uuid = UUID.randomUUID();
+			int temp = 1;
+			System.out.println("jsp에서 넘어온 이미지 리스트 : "+files);
+			
+			if(files != null && files.size() != 0) {
+				
+				
+				for(MultipartFile multi : files) {
+					
+					String originalName = multi.getOriginalFilename();
+					System.out.println("original File name : "+originalName);
+					
+					String convertFileName = uuid.toString()+temp+"_"+originalName;
+					prodTemp= prodTemp+convertFileName+((temp<files.size()) ? "," : "");
+					
+					// 경로에 저장
+					multi.transferTo(new File((temDir)+"\\"+convertFileName));
+					temp++;
+					System.out.println("originalName : "+originalName);
+					System.out.println("convertName : "+convertFileName);
+				}
+				// 저장할 경로 지정 및 저장
+				
+				System.out.println("product domain에 저장할 내용 : "+prodTemp);
+				
+				product.setFileName(prodTemp);
+			}
+		
+		
 		//Business Logic
 		productService.addProduct(product);
 		
@@ -92,12 +162,21 @@ public class ProductController {
 		
 		//Business Logic
 		Product product = productService.getProduct(prodNo);
-		System.out.println("select 결과 잘 넘어오는지 : "+product.toString());
+		System.out.println("FileName : "+product.getFileName());
 		
+		//null값 처리
+		if (product.getFileName() == null) {
+			product.setFileName("");
+			System.out.println("FileName : "+product.getFileName());
+		}
+		
+		String[] files = product.getFileName().split("[,]");
+
 		// Model 과 View 연결
 		model.addAttribute("product", product);
 		model.addAttribute("menu", menu);
-		
+		model.addAttribute("files", files);
+		//model.addAttribute("filename", product.getFileName());
 		// if문으로 manage type마다 결과값다르게 보내기
 		if(menu.equals("manage")) {
 			return "forward:/product/updateProduct?prodNo="+prodNo;
@@ -164,17 +243,26 @@ public class ProductController {
 		
 		Page resultPage = new Page( search.getCurrentPage(), ((Integer)map.get("totalCount")).intValue(), pageUnit, pageSize);
 		System.out.println(resultPage);
+		List<Product> list = (List)(map.get("list"));
+		List <String> fileName = new ArrayList();
+		
+		for(Product prod : list) {
+			System.out.println("listProd에서 추출한 prod 의 filename : "+prod.getFileName());
+			if (prod.getFileName() == null) {
+				prod.setFileName("");
+				System.out.println("FileName : "+prod.getFileName());
+			}
+			
+			String[] files = prod.getFileName().split("[,]");
+			fileName.add(files[0]);
+		} 
 		
 		// Model 과 View 연결
 		model.addAttribute("list", map.get("list"));
 		model.addAttribute("resultPage", resultPage);
 		model.addAttribute("search", search);
 		model.addAttribute("menu", menu);
-		List<Product> product =(List)map.get("list");
-		for(Product product1 : product ) {
-			System.out.println(product1);
-		}
-		
+		model.addAttribute("fileName", fileName);
 		return "forward:/product/listProduct.jsp";
 	}
 }

@@ -14,8 +14,14 @@
 	<title>상품 목록조회</title>
 	
 	<link rel="stylesheet" href="/css/admin.css" type="text/css">
-	
 	<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- cdn -->
+	
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+	<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+	
 	
 	<script type="text/javascript">
 		function fncGetUserList(currentPage) {
@@ -25,6 +31,8 @@
 			$('form').attr("method", "post").attr("action", "/product/listProduct?menu=${requestScope.menu}").submit();
 		}
 		
+		
+		
 		//다른 기능 (검색, 나머지 )
 		$(function() {
 			
@@ -32,9 +40,18 @@
 				fncGetUserList('1');
 			});
 			
+			
+			
+			let prodNo = $("input[name='prodNo']");
+			let prodNoLen = prodNo.length;
 			$(".ct_list_pop td:nth-child(3)").on('click', function() {
-				var prodNo = $("input[name='prodNo']").val();
-				self.location="/product/getProduct?menu=${menu}&prodNo="+prodNo;
+				
+				console.log(prodNoLen);
+				var text = $(this).children("input[name='prodNo']").val();
+				console.log(text);
+				self.location="/product/getProduct?menu=${menu}&prodNo="+text;	
+					
+				/* self.location= */
 			})
 		});
 		
@@ -103,7 +120,7 @@
 	</tr>
 	
 	<tr>
-		<td class="ct_list_b" width="100">No</td>
+		<td class="ct_list_b" width="100">사진</td>
 		<td class="ct_line02"></td>
 		<td class="ct_list_b" width="150">상품명</td>
 		<td class="ct_line02"></td>
@@ -123,7 +140,10 @@
 	<c:forEach var="product" items="${list}">
 		<c:set var="i" value="${ i+1 }" />
 		<tr class="ct_list_pop">
-			<td align="center">${ i }</td>
+			<td align="center">
+				<img alt="상품이미지" src="/images/uploadFiles/${fileName[i-1]}" onerror="this.style.display='none'" height="180" width="180"/>
+				
+			</td>
 			<td></td>
 			<td align="left">
 				${product.prodName}

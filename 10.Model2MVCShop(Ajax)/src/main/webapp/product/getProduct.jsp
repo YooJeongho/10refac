@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=EUC-KR"
     pageEncoding="EUC-KR"%>
     
-
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
 <head>
@@ -77,7 +77,11 @@
 	<tr>
 		<td width="104" class="ct_write">상품이미지</td>
 		<td bgcolor="D6D6D6" width="1"></td>
-		<td class="ct_write01">${product.fileName}</td>
+		<td class="ct_write01">
+			<c:forEach items="${files}" var="a">
+				<img alt="상품 이미지" src="/images/uploadFiles/${a}">
+			</c:forEach>
+		</td>
 	</tr>
 	<tr>
 		<td height="1" colspan="3" bgcolor="D6D6D6"></td>
